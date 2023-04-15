@@ -3,6 +3,12 @@ import math
 
 from vex import *
 
+DEAD_JOYSTICK = 5
+
+JOYSTICK_CENTER = 20
+
+ROTATE_MOVEMENT = 50
+
 # Brain should be defined by default
 brain=Brain()
 
@@ -52,10 +58,10 @@ def spin_motor(motor: Motor, movement: float):
     if movement == 0:
         motor.stop()
     elif movement < 0:
-        motor.set_velocity(-movement, VelocityUnits.PERCENT)
+        motor.set_velocity(min(-movement, 100), VelocityUnits.PERCENT)
         motor.spin(REVERSE)
     else:
-        motor.set_velocity(movement, VelocityUnits.PERCENT)
+        motor.set_velocity(min(movement, 100), VelocityUnits.PERCENT)
         motor.spin(FORWARD)
 
 
@@ -72,18 +78,60 @@ def controller_function():
         left_joystick_angle = compute_joystick_angle(left_joystick_x, left_joystick_y)
         left_joystick_distance = compute_joystick_distance(left_joystick_x, left_joystick_y)
 
-        if left_joystick_distance < 5:
+        right_joystick_angle = compute_joystick_angle(right_joystick_x, right_joystick_y)
+        right_joystick_distance = compute_joystick_distance(right_joystick_x, right_joystick_y)
+
+        if left_joystick_distance < DEAD_JOYSTICK:
             movement_left_front = 0
             movement_right_front = 0
         else:
             movement_left_front = compute_movement_left_front(left_joystick_angle, left_joystick_distance)
             movement_right_front = compute_movement_right_front(left_joystick_angle, left_joystick_distance)
 
-        spin_motor(motor_left_front, movement_left_front)
-        spin_motor(motor_left_back, movement_right_front)
+        if -JOYSTICK_CENTER < right_joystick_x < JOYSTICK_CENTER:
+            rotate_left_front = 0
+            rotate_left_back = 0
+            rotate_right_front = 0
+            rotate_right_back = 0
+        elif right_joystick_x > 0:
+            if -JOYSTICK_CENTER < right_joystick_y < JOYSTICK_CENTER:
+                rotate_left_front = ROTATE_MOVEMENT
+                rotate_left_back = ROTATE_MOVEMENT
+                rotate_right_front = -ROTATE_MOVEMENT
+                rotate_right_back = -ROTATE_MOVEMENT
+            elif right_joystick_y > 0:
+                rotate_left_front = ROTATE_MOVEMENT
+                rotate_left_back = ROTATE_MOVEMENT
+                rotate_right_front = 0
+                rotate_right_back = 0
+            else:
+                rotate_left_front = ROTATE_MOVEMENT
+                rotate_left_back = 0
+                rotate_right_front = -ROTATE_MOVEMENT
+                rotate_right_back = 0
+        else:
+            if -JOYSTICK_CENTER < right_joystick_y < JOYSTICK_CENTER:
+                rotate_left_front = -ROTATE_MOVEMENT
+                rotate_left_back = -ROTATE_MOVEMENT
+                rotate_right_front = ROTATE_MOVEMENT
+                rotate_right_back = ROTATE_MOVEMENT
+            elif right_joystick_y > 0:
+                rotate_left_front = 0
+                rotate_left_back = 0
+                rotate_right_front = ROTATE_MOVEMENT
+                rotate_right_back = ROTATE_MOVEMENT
+            else:
+                rotate_left_front = 0
+                rotate_left_back = -ROTATE_MOVEMENT
+                rotate_right_front = 0
+                rotate_right_back = ROTATE_MOVEMENT
+            
 
-        spin_motor(motor_right_front, movement_right_front)
-        spin_motor(motor_right_back, movement_left_front)
+        spin_motor(motor_left_front, movement_left_front + rotate_left_front)
+        spin_motor(motor_left_back, movement_right_front + rotate_left_back)
+
+        spin_motor(motor_right_front, movement_right_front + rotate_right_front)
+        spin_motor(motor_right_back, movement_left_front + rotate_right_back)
 
         brain.screen.clear_screen()
         brain.screen.set_cursor(1, 1)
@@ -99,6 +147,9 @@ def controller_function():
         brain.screen.next_row()
         brain.screen.print("movement_right_front=%f" % movement_right_front)
         brain.screen.next_row()
+        brain.screen.print("right_joystick_x=%d" % right_joystick_x)
+        brain.screen.next_row()
+        brain.screen.print("right_joystick_y=%d" % right_joystick_x)
 
         # wait before repeating the process
         wait(20, MSEC)
