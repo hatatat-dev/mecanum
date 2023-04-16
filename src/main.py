@@ -9,6 +9,8 @@ JOYSTICK_CENTER = 20
 
 ROTATE_MOVEMENT = 50
 
+MOTOR_SCALE = 0.8
+
 # Brain should be defined by default
 brain=Brain()
 
@@ -58,10 +60,10 @@ def spin_motor(motor: Motor, movement: float):
     if movement == 0:
         motor.stop()
     elif movement < 0:
-        motor.set_velocity(min(-movement, 100), VelocityUnits.PERCENT)
+        motor.set_velocity(min(-movement, 100) * MOTOR_SCALE, VelocityUnits.PERCENT)
         motor.spin(REVERSE)
     else:
-        motor.set_velocity(min(movement, 100), VelocityUnits.PERCENT)
+        motor.set_velocity(min(movement, 100) * MOTOR_SCALE, VelocityUnits.PERCENT)
         motor.spin(FORWARD)
 
 
