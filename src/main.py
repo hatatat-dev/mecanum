@@ -21,15 +21,34 @@ brain = Brain()
 # Robot configuration code
 controller = Controller(PRIMARY)
 
+motor_direction = True
+
 RED_CARTRIDGE = GearSetting.RATIO_36_1
 GREEN_CARTRIDGE = GearSetting.RATIO_18_1
 BLUE_CARTRIDGE = GearSetting.RATIO_6_1
 
-motor_left_front = Motor(Ports.PORT11, BLUE_CARTRIDGE, False)
-motor_left_back = Motor(Ports.PORT20, BLUE_CARTRIDGE, False)
+# Motor class - use this to create an instance of a V5 smart motor
+# Arguments:
+#     port : The smartport this device is attached to
+#     gears (optional) : The gear cartridge installed in the motor, default is the green 18_1
+#     reverse (optional) : Should the motor's spin direction be reversed, default is False
+#
+# Returns:
+#     A new Motor object.
+#
+# Examples:
+#     motor1 = Motor(Ports.PORT1)
+#     motor2 = Motor(Ports.PORT2, GearSetting.RATIO_36_1)
+#     motor3 = Motor(Ports.PORT3, True)
+#     motor4 = Motor(Ports.PORT4, GearSetting.RATIO_6_1, True)
 
-motor_right_front = Motor(Ports.PORT1, BLUE_CARTRIDGE, True)
-motor_right_back = Motor(Ports.PORT10, BLUE_CARTRIDGE, True)
+motor_left_front = Motor(Ports.PORT11, BLUE_CARTRIDGE, motor_direction)
+motor_left_back = Motor(Ports.PORT20, BLUE_CARTRIDGE, motor_direction)
+
+motor_right_front = Motor(Ports.PORT1, BLUE_CARTRIDGE, not motor_direction)
+motor_right_back = Motor(Ports.PORT10, BLUE_CARTRIDGE, not motor_direction)
+
+beyblade = Motor(Ports.PORT17, GREEN_CARTRIDGE, True)
 
 
 def zero_to_three_sixty(angle: float) -> float:
@@ -169,6 +188,21 @@ def controller_function():
                    movement_right_front + rotate_right_front)
 
         spin_motor(motor_right_back, movement_left_front + rotate_right_back)
+
+        if controller.buttonX.pressing():
+            beyblade.set_velocity(100, VelocityUnits.PERCENT)
+            beyblade.spin(FORWARD)
+        elif controller.buttonA.pressing():
+            beyblade.set_velocity(100, VelocityUnits.PERCENT)
+            beyblade.spin(REVERSE)
+        elif controller.buttonY.pressing():
+            beyblade.set_velocity(1, VelocityUnits.PERCENT)
+            beyblade.spin(FORWARD)
+        elif controller.buttonB.pressing():
+            beyblade.set_velocity(1, VelocityUnits.PERCENT)
+            beyblade.spin(REVERSE)
+        else:
+            beyblade.stop()
 
         # Output some internal variables to the brain screen
         brain.screen.clear_screen()
